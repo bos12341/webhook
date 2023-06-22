@@ -12,6 +12,7 @@ TOKEN = os.environ['TOKEN']
 
 client = discord.Client()
 webhooks = []  # 웹훅을 저장할 리스트
+admin_id = 934815826983395358  # 관리자 아이디
 is_sending = False  # 웹훅 전송 상태
 
 @client.event
@@ -26,6 +27,10 @@ async def on_message(message):
         return
 
     if message.content.startswith('-웹훅추가'):
+        if message.author.id != admin_id:
+            await message.channel.send('관리자만 웹훅을 추가할 수 있습니다.')
+            return
+
         webhook_url = message.content.split(' ')[1]  # 메시지에서 웹훅 주소 추출
         webhooks.append(webhook_url)  # 웹훅을 리스트에 추가
         with open('memo.txt', 'a') as f:
@@ -33,6 +38,10 @@ async def on_message(message):
         await message.channel.send('웹훅이 추가되었습니다.')
 
     elif message.content.startswith('-시작'):
+        if message.author.id != admin_id:
+            await message.channel.send('관리자만 웹훅 전송을 시작할 수 있습니다.')
+            return
+
         if is_sending:
             await message.channel.send('이미 웹훅을 전송 중입니다.')
         else:
@@ -40,6 +49,10 @@ async def on_message(message):
             await start_sending_webhooks(message.channel)
 
     elif message.content.startswith('-중지'):
+        if message.author.id != admin_id:
+            await message.channel.send('관리자만 웹훅 전송을 중지할 수 있습니다.')
+            return
+
         if not is_sending:
             await message.channel.send('현재 웹훅 전송이 중지되어 있습니다.')
         else:
@@ -53,7 +66,7 @@ async def start_sending_webhooks(channel):
             webhooks = f.read().splitlines()  # 메모장에서 웹훅 링크 읽어오기
 
         for webhook_url in webhooks:
-            webhook = discord.Webhook.from_url(webhook_url)
+            webhook = discord.Webhook.from_url(webhook_url, adapter=discord.RequestsWebhookAdapter())
             await webhook.send('@everyone https://discord.gg/prwCMs9HPm')  # 웹훅 전송
         await asyncio.sleep(3000)  # 50분(3000초) 대기
 
