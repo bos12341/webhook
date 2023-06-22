@@ -13,7 +13,6 @@ TOKEN = os.environ['TOKEN']
 client = discord.Client()
 webhooks = []  # 웹훅을 저장할 리스트
 is_sending = False  # 웹훅 전송 상태
-session = aiohttp.ClientSession()  # aiohttp 세션 생성
 
 @client.event
 async def on_ready():
@@ -21,7 +20,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global is_sending  # 전역 변수로 선언
+    global webhooks, is_sending  # 전역 변수로 선언
 
     if message.author == client.user:
         return
@@ -48,14 +47,13 @@ async def on_message(message):
             await stop_sending_webhooks(message.channel)
 
 async def start_sending_webhooks(channel):
-    global is_sending  # 전역 변수로 참조
-
+    global webhooks, is_sending  # 전역 변수로 참조
     while is_sending:
         with open('memo.txt', 'r') as f:
             webhooks = f.read().splitlines()  # 메모장에서 웹훅 링크 읽어오기
 
         for webhook_url in webhooks:
-            webhook = discord.Webhook.from_url(webhook_url, adapter=discord.AsyncWebhookAdapter(session))
+            webhook = discord.Webhook.from_url(webhook_url)
             await webhook.send('@everyone https://discord.gg/prwCMs9HPm')  # 웹훅 전송
         await asyncio.sleep(3000)  # 50분(3000초) 대기
 
